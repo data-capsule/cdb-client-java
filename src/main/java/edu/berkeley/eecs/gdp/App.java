@@ -25,6 +25,7 @@ public final class App {
         }
 
         Client client = new Client(args[0], args[1], args[2]);
+        client.Init();
         Scanner sc = new Scanner(System.in);
 
         while (sc.hasNextLine()){
@@ -57,6 +58,7 @@ public final class App {
         }
 
         sc.close();
+        client.Close();
 
     }
 }

@@ -155,7 +155,7 @@ public class Client {
 
     public Triplet<KV_Status, ByteString, ByteString> Write(ByteString key, ByteString val){
         List<ByteString> payload = new Vector<>();
-        payload.add(ByteString.copyFromUtf8("READ"));
+        payload.add(ByteString.copyFromUtf8("WRITE"));
         payload.add(key);
         payload.add(val);
         try{
