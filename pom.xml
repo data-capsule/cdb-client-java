@@ -17,7 +17,7 @@
     <!-- JaCoCo thresholds. Increase gradually as you add tests. -->
     <jacoco.unit-tests.limit.instruction-ratio>0%</jacoco.unit-tests.limit.instruction-ratio>
     <jacoco.unit-tests.limit.branch-ratio>0%</jacoco.unit-tests.limit.branch-ratio>
-    <jacoco.unit-tests.limit.class-complexity>20</jacoco.unit-tests.limit.class-complexity>
+    <jacoco.unit-tests.limit.class-complexity>50</jacoco.unit-tests.limit.class-complexity>
     <jacoco.unit-tests.limit.method-complexity>5</jacoco.unit-tests.limit.method-complexity>
     <grpc.version>1.51.0</grpc.version>
     <grpc.netversion>1.51.0</grpc.netversion>
@@ -173,7 +173,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven-surefire-plugin.version}</version>
       </plugin>
-      <plugin>
+      <!-- <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${jacoco-maven-plugin.version}</version>
@@ -238,6 +238,26 @@
               </rules>
             </configuration>
           </execution>
+        </executions>
+      </plugin> -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+            <execution>
+                <goals>
+                    <goal>shade</goal>
+                </goals>
+                <configuration>
+                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                    <transformers>
+                        <transformer implementation=
+                          "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            <mainClass>edu.berkeley.eecs.gdp.App</mainClass>
+                    </transformer>
+                </transformers>
+            </configuration>
+            </execution>
         </executions>
       </plugin>
       <plugin>
