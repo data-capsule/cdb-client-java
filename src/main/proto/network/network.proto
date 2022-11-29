@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "edu.berkeley.eecs.gdp";
+option java_outer_classname = "NetworkProto";
+option objc_class_prefix = "NTW";
+
+package network;
+
+service NetworkExchange {
+    rpc Send(stream PDU) returns (FIN);
+    rpc Recv(SYN) returns (stream PDU);
+};
+
+message PDU {
+    string origin = 1;          // Who actually sent the msg
+    string sender = 2;          // Name of the last hop
+    repeated string fwd_names = 3;
+    repeated bytes msg = 4; 
+};
+
+message SYN {
+    string name = 1;
+}
+
+message FIN {
+    int64 magic = 1;            // Don't send an empty message
+}
