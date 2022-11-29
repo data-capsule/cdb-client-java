@@ -127,13 +127,6 @@ public class Client {
         return resp_pdu.getMsgList();
     }
 
-    enum KV_Status {
-        READ_FAIL,
-        READ_PASS,
-        WRITE_FAIL,
-        WRITE_PASS
-    }
-
     public Pair<KV_Status, ByteString> Read(ByteString key){
         List<ByteString> payload = new Vector<>();
         payload.add(ByteString.copyFromUtf8("READ"));
@@ -142,15 +135,15 @@ public class Client {
             List<ByteString> resp = GenericRequest(payload);
             ByteString status = resp.get(0);
             if (status.toStringUtf8().equals("READ_PASS")){
-                return new Pair<Client.KV_Status,ByteString>(Client.KV_Status.READ_PASS, resp.get(1));
+                return new Pair<KV_Status,ByteString>(KV_Status.READ_PASS, resp.get(1));
             }else{
-                return new Pair<Client.KV_Status,ByteString>(Client.KV_Status.READ_FAIL, ByteString.copyFromUtf8(""));
+                return new Pair<KV_Status,ByteString>(KV_Status.READ_FAIL, ByteString.copyFromUtf8(""));
             }
         }catch(Exception e){
             System.err.println(e);
         }
 
-        return new Pair<Client.KV_Status,ByteString>(null, null);
+        return new Pair<KV_Status,ByteString>(null, null);
     }
 
     public Triplet<KV_Status, ByteString, ByteString> Write(ByteString key, ByteString val){
@@ -162,15 +155,15 @@ public class Client {
             List<ByteString> resp = GenericRequest(payload);
             ByteString status = resp.get(0);
             if (status.toStringUtf8().equals("WRITE_PASS")){
-                return new Triplet<Client.KV_Status,ByteString,ByteString>(Client.KV_Status.WRITE_PASS, resp.get(1), resp.get(2));
+                return new Triplet<KV_Status,ByteString,ByteString>(KV_Status.WRITE_PASS, resp.get(1), resp.get(2));
             }else{
-                return new Triplet<Client.KV_Status,ByteString,ByteString>(Client.KV_Status.WRITE_FAIL, ByteString.copyFromUtf8(""), ByteString.copyFromUtf8(""));
+                return new Triplet<KV_Status,ByteString,ByteString>(KV_Status.WRITE_FAIL, ByteString.copyFromUtf8(""), ByteString.copyFromUtf8(""));
             }
         }catch(Exception e){
             System.err.println(e);
         }
 
-        return new Triplet<Client.KV_Status,ByteString,ByteString>(null, null, null);
+        return new Triplet<KV_Status,ByteString,ByteString>(null, null, null);
 
     }
 }
