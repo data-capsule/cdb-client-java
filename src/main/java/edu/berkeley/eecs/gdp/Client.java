@@ -1,7 +1,6 @@
 package edu.berkeley.eecs.gdp;
 
 import com.google.protobuf.ByteString;
-import io.grpc.Channel;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
