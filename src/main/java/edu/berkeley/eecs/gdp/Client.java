@@ -202,6 +202,9 @@ public class Client {
         Vector<ByteString> v_wal_pdu = new Vector<>();
         v_wal_pdu.add(wal_pdu);
         List<ByteString> resp = GenericRequest(v_wal_pdu, "dc");
+        for (ByteString res: resp){
+            System.err.println("WAL Response: " + res);
+        }
         
         // TODO: Check if WAL succeeded
     }
@@ -209,10 +212,10 @@ public class Client {
     public Triplet<KV_Status, ByteString, ByteString> Write(ByteString key, ByteString val){
         try {
             WalRequest(key, val);
+            System.err.println("WAL Complete");
         } catch (Exception e) {
             System.err.println(e);
             return new Triplet<KV_Status,ByteString,ByteString>(KV_Status.WRITE_FAIL, null, null);
-            
         }
 
         List<ByteString> payload = new Vector<>();
