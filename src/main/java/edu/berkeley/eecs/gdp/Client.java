@@ -18,6 +18,7 @@ import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
 public class Client {
+    private final int NUM_DC_REPLICAS = 3;
     private final ManagedChannel channel;
     private final NetworkExchangeBlockingStub blockingStub;
     private final NetworkExchangeStub asyncStub;
@@ -164,7 +165,7 @@ public class Client {
         return new Pair<KV_Status,ByteString>(null, null);
     }
 
-    private void WalRequest(ByteString key, ByteString val) throws InterruptedException, NoSuchAlgorithmException {
+    private void WalRequest(ByteString key, ByteString val) throws InterruptedException, NoSuchAlgorithmException, AssertionError {
         Log wal_req = Log.newBuilder()
             .setKey(key)
             .setVal(val)
@@ -202,11 +203,28 @@ public class Client {
         Vector<ByteString> v_wal_pdu = new Vector<>();
         v_wal_pdu.add(wal_pdu);
         List<ByteString> resp = GenericRequest(v_wal_pdu, "dc");
+        int ack_cnt = 0;
+
         for (ByteString res: resp){
             System.err.println("WAL Response: " + res);
+            if (res.toStringUtf8().equals("ACK")){
+                ack_cnt++;
+            }
         }
+
+        for (int i = 1; i < NUM_DC_REPLICAS; i++){
+            PDU resp_pdu = sq_net.take();
+            for (ByteString res: resp_pdu.getMsgList()){
+                System.err.println("WAL Response: " + res);
+                if (res.toStringUtf8().equals("ACK")){
+                    ack_cnt++;
+                }
+            }
+        }
+
+        assert ack_cnt == NUM_DC_REPLICAS;
         
-        // TODO: Check if WAL succeeded
+        // TODO: Handle replica crashes with timeouts.
     }
 
     public Triplet<KV_Status, ByteString, ByteString> Write(ByteString key, ByteString val){
