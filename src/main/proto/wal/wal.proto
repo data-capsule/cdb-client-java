@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "edu.berkeley.eecs.gdp";
+option java_outer_classname = "WalProto";
+option objc_class_prefix = "WAL";
+
+package wal;
+
+message Log {
+    bytes key = 1;
+    bytes val = 2;
+    int64 sync_record_timestamp = 3;
+    int64 timestamp = 4;
+}
+
+message SyncRecord {
+    int64 timestamp = 1;
+    repeated bytes prev_hashes = 2;
+}
