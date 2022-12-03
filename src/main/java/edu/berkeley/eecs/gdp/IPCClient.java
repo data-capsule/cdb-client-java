@@ -72,8 +72,8 @@ public class IPCClient {
 
         ByteBuffer bf2 = ByteBuffer.allocate(4);
         bf2.order(ByteOrder.LITTLE_ENDIAN);              // Specific to test machine
-        this.cdbInFile.write(bf2.array());
         bf2.putInt(val.size());
+        this.cdbInFile.write(bf2.array());
         this.cdbInFile.write(val.toByteArray());
 
         byte[] result = new byte[1];
