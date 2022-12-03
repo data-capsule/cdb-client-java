@@ -94,7 +94,7 @@ public class IPCClient {
             byte[] resVal = new byte[sz];
             this.cdbOutFile.read(resVal);
 
-            return new Triplet<KV_Status,ByteString,ByteString>(KV_Status.READ_PASS, ByteString.copyFrom(resKey), ByteString.copyFrom(resVal));
+            return new Triplet<KV_Status,ByteString,ByteString>(KV_Status.WRITE_PASS, ByteString.copyFrom(resKey), ByteString.copyFrom(resVal));
         }else{
             return new Triplet<KV_Status,ByteString,ByteString>(KV_Status.WRITE_FAIL, null, null);
         }
