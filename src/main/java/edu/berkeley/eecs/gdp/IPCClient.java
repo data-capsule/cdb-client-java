@@ -23,7 +23,7 @@ public class IPCClient {
     }
 
     public void Init() throws FileNotFoundException {
-        this.cdbInFile = new RandomAccessFile(this.cdbInFifo, "w");
+        this.cdbInFile = new RandomAccessFile(this.cdbInFifo, "rw");
         this.cdbOutFile = new RandomAccessFile(this.cdbOutFifo, "r");
     }
 
