@@ -1,12 +1,10 @@
 package edu.berkeley.eecs.gdp;
 
-import java.nio.ByteBuffer;
 import java.util.Scanner;
 
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.ByteString;
 
 
@@ -21,19 +19,26 @@ public final class App {
      * Says hello to the world.
      * @param args The arguments of the program.
      */
-    public static void main(String[] args) {
-        if (args.length != 3){
-            System.out.println("Usage: ./client my_name cdb_name towncrier_addr");
+    public static void main(String[] args) throws Exception {
+        // if (args.length != 3){
+        //     System.out.println("Usage: ./client my_name cdb_name towncrier_addr");
+        //     return;
+        // }
+
+        if (args.length != 2){
+            System.out.println("Usage: ./client cdbInFifoPath cdbOutFifoPath");
             return;
         }
 
-        Client client = new Client(args[0], args[1], args[2]);
+        IPCClient client = new IPCClient(args[0], args[1]); //, args[2]);
         client.Init();
         Scanner sc = new Scanner(System.in);
 
         while (sc.hasNextLine()){
             String line = sc.nextLine();
             if (line.startsWith("END")){
+                client.Close();
+                sc.close();
                 return;
             }else if (line.startsWith("READ")){
                 String key = line.split(" ")[1];
@@ -59,8 +64,5 @@ public final class App {
                 }
             }
         }
-        sc.close();
-        client.Close();
-
     }
 }
