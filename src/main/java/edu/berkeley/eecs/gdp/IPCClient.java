@@ -37,8 +37,9 @@ public class IPCClient {
         this.cdbInFile.write(r);
 
         ByteBuffer bf = ByteBuffer.allocate(4);
-        bf.order(ByteOrder.BIG_ENDIAN);              // Specific to test machine
+        bf.order(ByteOrder.LITTLE_ENDIAN);              // Specific to test machine
         bf.putInt(key.size());
+        this.cdbInFile.write(bf.array());
         this.cdbInFile.write(key.toByteArray());
         this.cdbInFile.getFD().sync();
 
@@ -47,7 +48,7 @@ public class IPCClient {
 
         if (result[0] == 'P'){
             ByteBuffer bf2 = ByteBuffer.allocate(4);
-            bf2.order(ByteOrder.BIG_ENDIAN);
+            bf2.order(ByteOrder.LITTLE_ENDIAN);
             this.cdbOutFile.read(bf2.array());
             int sz = bf2.getInt();
 
@@ -65,13 +66,15 @@ public class IPCClient {
         this.cdbInFile.write(w);
 
         ByteBuffer bf1 = ByteBuffer.allocate(4);
-        bf1.order(ByteOrder.BIG_ENDIAN);              // Specific to test machine
+        bf1.order(ByteOrder.LITTLE_ENDIAN);              // Specific to test machine
         bf1.putInt(key.size());
+        this.cdbInFile.write(bf1.array());
         this.cdbInFile.write(key.toByteArray());
         this.cdbInFile.getFD().sync();
 
         ByteBuffer bf2 = ByteBuffer.allocate(4);
-        bf2.order(ByteOrder.BIG_ENDIAN);              // Specific to test machine
+        bf2.order(ByteOrder.LITTLE_ENDIAN);              // Specific to test machine
+        this.cdbInFile.write(bf2.array());
         bf2.putInt(val.size());
         this.cdbInFile.write(val.toByteArray());
 
@@ -80,14 +83,14 @@ public class IPCClient {
 
         if (result[0] == 'P'){
             ByteBuffer bf3 = ByteBuffer.allocate(4);
-            bf3.order(ByteOrder.BIG_ENDIAN);
+            bf3.order(ByteOrder.LITTLE_ENDIAN);
             this.cdbOutFile.read(bf3.array());
             int sz = bf3.getInt();
             byte[] resKey = new byte[sz];
             this.cdbOutFile.read(resKey);
 
             ByteBuffer bf4 = ByteBuffer.allocate(4);
-            bf4.order(ByteOrder.BIG_ENDIAN);
+            bf4.order(ByteOrder.LITTLE_ENDIAN);
             this.cdbOutFile.read(bf4.array());
             sz = bf4.getInt();
             byte[] resVal = new byte[sz];
