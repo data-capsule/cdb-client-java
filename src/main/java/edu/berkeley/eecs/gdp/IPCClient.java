@@ -40,6 +40,7 @@ public class IPCClient {
         bf.order(ByteOrder.BIG_ENDIAN);              // Specific to test machine
         bf.putInt(key.size());
         this.cdbInFile.write(key.toByteArray());
+        this.cdbInFile.getFD().sync();
 
         byte[] result = new byte[1];
         this.cdbOutFile.read(result);
@@ -67,6 +68,7 @@ public class IPCClient {
         bf1.order(ByteOrder.BIG_ENDIAN);              // Specific to test machine
         bf1.putInt(key.size());
         this.cdbInFile.write(key.toByteArray());
+        this.cdbInFile.getFD().sync();
 
         ByteBuffer bf2 = ByteBuffer.allocate(4);
         bf2.order(ByteOrder.BIG_ENDIAN);              // Specific to test machine
