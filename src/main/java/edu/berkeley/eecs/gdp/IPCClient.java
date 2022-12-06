@@ -32,6 +32,15 @@ public class IPCClient {
         this.cdbOutFile.close();
     }
 
+    public void GracefulStop() throws IOException {
+        byte[] e = {'E'};           // END
+        this.cdbInFile.write(e);
+
+        byte[] d = new byte[1];
+        this.cdbOutFile.read(d);   // CDB should send a final byte before closing. 
+
+    }
+
     public Pair<KV_Status, ByteString> Read(ByteString key) throws IOException {
         byte[] r = {'R'};
         this.cdbInFile.write(r);

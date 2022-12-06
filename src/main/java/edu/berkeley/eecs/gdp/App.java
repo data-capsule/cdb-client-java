@@ -37,6 +37,9 @@ public final class App {
         while (sc.hasNextLine()){
             String line = sc.nextLine();
             if (line.startsWith("END")){
+                System.out.println("Gracefully stopping CDB....");
+                client.GracefulStop();
+                System.out.println("Client dying");
                 client.Close();
                 sc.close();
                 return;
