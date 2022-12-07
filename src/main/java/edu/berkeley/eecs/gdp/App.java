@@ -25,12 +25,12 @@ public final class App {
         //     return;
         // }
 
-        if (args.length != 2){
-            System.out.println("Usage: ./client cdbInFifoPath cdbOutFifoPath");
+        if (args.length != 3){
+            System.out.println("Usage: ./client myName cdbName tc_addr");
             return;
         }
 
-        IPCClient client = new IPCClient(args[0], args[1]); //, args[2]);
+        Client client = new Client(args[0], args[1], args[2]);
         client.Init();
         Scanner sc = new Scanner(System.in);
 
@@ -43,6 +43,13 @@ public final class App {
                 client.Close();
                 sc.close();
                 return;
+            }else if (line.startsWith("RESET")){
+                // RESET user clock
+                String[] cmds = line.split(" ");
+                String user = cmds[1];
+                long ts = Long.valueOf(cmds[2].trim());
+                client.ResetClock(user, ts);
+                client.PrintClock();
             }else if (line.startsWith("READ")){
                 String key = line.split(" ")[1];
                 Pair<KV_Status, ByteString> ans = client.Read(ByteString.copyFromUtf8(key));

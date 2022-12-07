@@ -12,6 +12,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.SynchronousQueue;
 import org.javatuples.Pair;
@@ -26,10 +27,9 @@ public class Client {
     private SynchronousQueue<PDU> sq_local;
     private String cdbName;
     private String myName;
-    private long ts;
-    private long sync_ts;
 
     private byte[] current_hash;
+    private Clock.Builder clock;
 
     private Thread t_recv;
     private Thread t_send;
@@ -45,10 +45,10 @@ public class Client {
         this.cdbName = cdbName;
         this.myName = myName;
 
-        this.ts = 0;
-        this.sync_ts = 0;
-
         this.current_hash = new byte[32];
+        this.clock = Clock.newBuilder()
+            .setSyncRecordTimestamp(0)
+            .putVectorClock(myName, 0);
 
         // TODO: Freshness request to reload ts and sync_ts.
     }
@@ -146,6 +146,25 @@ public class Client {
         return GenericRequest(args, cdbName);
     }
 
+    public void ResetClock(String user, long clock_value){
+        this.clock.putVectorClock(user, clock_value);
+    }
+
+    public void PrintClock(){
+        Map<String, Long> __clock = this.clock.getVectorClockMap();
+        for (String user : __clock.keySet()){
+            System.out.print(user + "=>" + __clock.get(user) + " ");
+        }
+        System.out.println();
+    }
+
+    public void GracefulStop() throws InterruptedException{
+        List<ByteString> payload = new Vector<>();
+        payload.add(ByteString.copyFromUtf8("END"));
+
+        GenericRequest(payload);
+    }
+
     public Pair<KV_Status, ByteString> Read(ByteString key){
         List<ByteString> payload = new Vector<>();
         payload.add(ByteString.copyFromUtf8("READ"));
@@ -166,23 +185,32 @@ public class Client {
     }
 
     private void WalRequest(ByteString key, ByteString val) throws InterruptedException, NoSuchAlgorithmException, AssertionError {
+        long myClk = 0;
+        try {
+            myClk = this.clock.getVectorClockMap().get(this.myName);
+        } catch (Exception e){
+
+        }
+        myClk++;
+
+        this.clock.putVectorClock(this.myName, myClk);
+
         Log wal_req = Log.newBuilder()
             .setKey(key)
             .setVal(val)
-            .setTimestamp(ts)
-            .setSyncRecordTimestamp(sync_ts).build();
+            .setClock(this.clock)
+            .build();
 
         ByteString s_wal_req = wal_req.toByteString();
         MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
         byte[] payload_hash = sha256.digest(s_wal_req.toByteArray());
 
-        ts++;
         CapsuleHeader ch = CapsuleHeader.newBuilder()
             .setSender(1)
             .setPrevHash(ByteString.copyFrom(current_hash))
             .setHash(ByteString.copyFrom(payload_hash))
-            .setTimestamp(ts)
-            .setLastLogicalTimestamp(ts-1)
+            .setTimestamp(myClk)
+            .setLastLogicalTimestamp(myClk-1)
             .setMsgType("EOE")
             .setMsgLen(s_wal_req.size())
             .setReplyAddr(myName)
@@ -225,6 +253,10 @@ public class Client {
         assert ack_cnt == NUM_DC_REPLICAS;
         
         // TODO: Handle replica crashes with timeouts.
+
+        for (int i = 0; i < 32; i++){
+            current_hash[i] = head_hash[i];
+        }
     }
 
     public Triplet<KV_Status, ByteString, ByteString> Write(ByteString key, ByteString val){
