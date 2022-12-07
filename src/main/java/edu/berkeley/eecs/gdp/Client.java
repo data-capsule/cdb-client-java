@@ -272,6 +272,7 @@ public class Client {
         payload.add(ByteString.copyFromUtf8("WRITE"));
         payload.add(key);
         payload.add(val);
+        payload.add(this.clock.build().toByteString());
         
         try{
             List<ByteString> resp = GenericRequest(payload);
