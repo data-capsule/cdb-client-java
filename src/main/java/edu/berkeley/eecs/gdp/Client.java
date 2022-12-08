@@ -260,6 +260,13 @@ public class Client {
     }
 
     public Triplet<KV_Status, ByteString, ByteString> Write(ByteString key, ByteString val){
+        Pair<KV_Status, ByteString> sync_ts_resp = Read(ByteString.copyFromUtf8("$sync_ts"));
+        if (sync_ts_resp.getValue0() != KV_Status.READ_PASS){
+            return new Triplet<KV_Status, ByteString, ByteString>(KV_Status.WRITE_FAIL, null, null);
+        }
+        long sync_ts = Long.parseLong(sync_ts_resp.getValue1().toString());
+        this.clock.setSyncRecordTimestamp(sync_ts);
+        
         try {
             WalRequest(key, val);
             System.err.println("WAL Complete");
@@ -288,4 +295,44 @@ public class Client {
         }
 
     }
+
+    public Triplet<KV_Status, ByteString, ByteString> SlowWrite(ByteString key, ByteString val) throws InterruptedException {
+        Pair<KV_Status, ByteString> sync_ts_resp = Read(ByteString.copyFromUtf8("$sync_ts"));
+        if (sync_ts_resp.getValue0() != KV_Status.READ_PASS){
+            return new Triplet<KV_Status, ByteString, ByteString>(KV_Status.WRITE_FAIL, null, null);
+        }
+        long sync_ts = Long.parseLong(sync_ts_resp.getValue1().toString());
+        this.clock.setSyncRecordTimestamp(sync_ts);
+        
+        try {
+            WalRequest(key, val);
+            System.err.println("WAL Complete");
+        } catch (Exception e) {
+            System.err.println(e);
+            return new Triplet<KV_Status,ByteString,ByteString>(KV_Status.WRITE_FAIL, null, null);
+        }
+
+        Thread.sleep(5000);
+
+        List<ByteString> payload = new Vector<>();
+        payload.add(ByteString.copyFromUtf8("WRITE"));
+        payload.add(key);
+        payload.add(val);
+        payload.add(this.clock.build().toByteString());
+        
+        try{
+            List<ByteString> resp = GenericRequest(payload);
+            ByteString status = resp.get(0);
+            if (status.toStringUtf8().equals("WRITE_PASS")){
+                return new Triplet<KV_Status,ByteString,ByteString>(KV_Status.WRITE_PASS, resp.get(1), resp.get(2));
+            }else{
+                return new Triplet<KV_Status,ByteString,ByteString>(KV_Status.WRITE_FAIL, ByteString.copyFromUtf8(""), ByteString.copyFromUtf8(""));
+            }
+        }catch(Exception e){
+            System.err.println(e);
+            return new Triplet<KV_Status,ByteString,ByteString>(KV_Status.WRITE_FAIL, null, null);
+        }
+    }
+
+
 }

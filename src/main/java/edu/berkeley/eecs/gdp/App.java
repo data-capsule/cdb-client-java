@@ -25,8 +25,8 @@ public final class App {
         //     return;
         // }
 
-        if (args.length != 3){
-            System.out.println("Usage: ./client myName cdbName tc_addr");
+        if (args.length != 3 && args.length != 4){
+            System.out.println("Usage: ./client myName cdbName tc_addr [--slow]");
             return;
         }
 
@@ -64,9 +64,18 @@ public final class App {
                 // WRITE x y
                 // 012345678
                 String val = line.substring(key.length() + 7);
-                Triplet<KV_Status, ByteString, ByteString> ans = client.Write(
-                    ByteString.copyFromUtf8(key),
-                    ByteString.copyFromUtf8(val));
+                Triplet<KV_Status, ByteString, ByteString> ans;
+                
+                if (args.length == 4 && args[3] == "--slow"){
+                    ans = client.SlowWrite(
+                        ByteString.copyFromUtf8(key),
+                        ByteString.copyFromUtf8(val));
+                }else{
+                    ans = client.Write(
+                        ByteString.copyFromUtf8(key),
+                        ByteString.copyFromUtf8(val));
+                }
+                
                 if (ans.getValue0() == KV_Status.WRITE_PASS){
                     System.out.println("WRITE_PASS " + ans.getValue1() + " " + ans.getValue2());
                 }else{
