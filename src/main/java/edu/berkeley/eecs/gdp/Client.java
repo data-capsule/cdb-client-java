@@ -8,6 +8,7 @@ import edu.berkeley.eecs.gdp.NetworkExchangeGrpc.NetworkExchangeBlockingStub;
 import edu.berkeley.eecs.gdp.NetworkExchangeGrpc.NetworkExchangeStub;
 import io.grpc.stub.StreamObserver;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
@@ -301,7 +302,7 @@ public class Client {
         if (sync_ts_resp.getValue0() != KV_Status.READ_PASS){
             return new Triplet<KV_Status, ByteString, ByteString>(KV_Status.WRITE_FAIL, null, null);
         }
-        long sync_ts = Long.parseLong(sync_ts_resp.getValue1().toStringUtf8());
+        long sync_ts = Long.parseLong(new String(sync_ts_resp.getValue1().toByteArray(), StandardCharsets.UTF_8));
         this.clock.setSyncRecordTimestamp(sync_ts);
         
         try {
