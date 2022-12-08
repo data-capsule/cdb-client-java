@@ -301,7 +301,7 @@ public class Client {
         if (sync_ts_resp.getValue0() != KV_Status.READ_PASS){
             return new Triplet<KV_Status, ByteString, ByteString>(KV_Status.WRITE_FAIL, null, null);
         }
-        long sync_ts = Long.parseLong(sync_ts_resp.getValue1().toString());
+        long sync_ts = Long.parseLong(sync_ts_resp.getValue1().toStringUtf8());
         this.clock.setSyncRecordTimestamp(sync_ts);
         
         try {
