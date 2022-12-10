@@ -85,6 +85,15 @@ public class Client {
                 resps = blockingStub.recv(syn_req);
                 while (resps.hasNext()){
                     PDU pdu = resps.next();
+                    if (pdu.getMsgList().size() == 3 &&
+                    pdu.getMsg(0) == ByteString.copyFromUtf8("READ_PASS") &&
+                    pdu.getMsg(1) == ByteString.copyFromUtf8("CLOCK")){
+                        Clock new_clock = Clock.parseFrom(pdu.getMsg(2));
+                        clock.setSyncRecordTimestamp(new_clock.getSyncRecordTimestamp());
+                        for (String user: new_clock.getVectorClockMap().keySet()){
+                            clock.putVectorClock(user, new_clock.getVectorClockOrThrow(user));
+                        }
+                    }
                     sq_net.put(pdu);
                 }
             }catch (Exception e){
