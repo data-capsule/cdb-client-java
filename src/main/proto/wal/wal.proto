@@ -18,3 +18,7 @@ message SyncRecord {
     int64 timestamp = 1;
     repeated bytes prev_hashes = 2;
 }
+
+message ContentType {
+    repeated bytes data = 1;
+}

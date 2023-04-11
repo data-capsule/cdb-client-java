@@ -12,7 +12,9 @@ import com.google.protobuf.ByteString;
  * Hello world!
  */
 public final class App {
+    private static boolean isLoadPhase;
     private App() {
+        isLoadPhase = true;
     }
 
     /**
@@ -24,7 +26,7 @@ public final class App {
         //     System.out.println("Usage: ./client my_name cdb_name towncrier_addr");
         //     return;
         // }
-
+        isLoadPhase = true;
         if (args.length != 2){
             System.out.println("Usage: ./client cdbInFifoPath cdbOutFifoPath");
             return;
@@ -44,6 +46,10 @@ public final class App {
                 sc.close();
                 return;
             }else if (line.startsWith("READ")){
+                if (isLoadPhase){
+                    isLoadPhase = false;
+                    client.FlushBulk();
+                }
                 String key = line.split(" ")[1];
                 Pair<KV_Status, ByteString> ans = client.Read(ByteString.copyFromUtf8(key));
                 if (ans.getValue0() == KV_Status.READ_PASS){
@@ -51,7 +57,7 @@ public final class App {
                 }else{
                     System.out.println("READ_FAIL");
                 }
-            }else if (line.startsWith("WRITE")){
+            }else if (line.startsWith("WRITE") && !isLoadPhase){
                 String key = line.split(" ")[1];
 
                 // WRITE x y
@@ -65,7 +71,13 @@ public final class App {
                 }else{
                     System.out.println("WRITE_FAIL");
                 }
+            }else if (line.startsWith("WRITE") && isLoadPhase){
+                String key = line.split(" ")[1];
+                String val = line.substring(key.length() + 7);
+                client.BulkWrite(ByteString.copyFromUtf8(key), ByteString.copyFromUtf8(val));
             }
         }
+
+        client.FlushBulk();
     }
 }

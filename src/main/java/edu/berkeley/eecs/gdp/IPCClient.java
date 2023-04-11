@@ -1,6 +1,7 @@
 package edu.berkeley.eecs.gdp;
 
 
+import com.google.common.primitives.UnsignedLong;
 import com.google.protobuf.ByteString;
 
 import java.io.FileNotFoundException;
@@ -8,6 +9,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Vector;
+
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
@@ -16,15 +19,22 @@ public class IPCClient {
     private String cdbOutFifo;
     private RandomAccessFile cdbInFile;
     private RandomAccessFile cdbOutFile;
+    private int bulk_size;
+    private ContentType.Builder contentBuilder;
+    private final int MAX_BULK_SIZE = 64;
 
     public IPCClient(String cdbInFifo, String cdbOutFifo) {
         this.cdbInFifo = cdbInFifo;
         this.cdbOutFifo = cdbOutFifo;
+
     }
 
     public void Init() throws FileNotFoundException {
         this.cdbInFile = new RandomAccessFile(this.cdbInFifo, "rw");
         this.cdbOutFile = new RandomAccessFile(this.cdbOutFifo, "r");
+
+        this.bulk_size = 0;
+        this.contentBuilder = ContentType.newBuilder();
     }
 
     public void Close() throws IOException {
@@ -108,4 +118,67 @@ public class IPCClient {
             return new Triplet<KV_Status,ByteString,ByteString>(KV_Status.WRITE_FAIL, null, null);
         }
     }
+
+    public void BulkWrite(ByteString key, ByteString val) throws IOException {
+        contentBuilder = contentBuilder.addData(key).addData(val);
+        bulk_size++;
+
+        if (bulk_size < MAX_BULK_SIZE){
+            return;
+        }
+
+        FlushBulk();
+    }
+
+    public void FlushBulk() throws IOException {
+        if (bulk_size == 0){
+            return;
+        }
+
+        ContentType content = contentBuilder.build();
+
+        ByteString bs = content.toByteString();
+
+        int len = bs.size();
+
+        byte[] w = {'B'};
+        this.cdbInFile.write(w);
+
+        ByteBuffer bf1 = ByteBuffer.allocate(4);
+        bf1.order(ByteOrder.LITTLE_ENDIAN);              // Specific to test machine
+        bf1.putInt(len);
+        this.cdbInFile.write(bf1.array());
+        this.cdbInFile.write(bs.toByteArray());
+
+        byte[] result = new byte[1];
+        this.cdbOutFile.read(result);
+        ByteBuffer bf3 = ByteBuffer.allocate(8);
+        bf3.order(ByteOrder.LITTLE_ENDIAN);
+        this.cdbOutFile.read(bf3.array());
+        long ret = bf3.getLong();
+        if (result[0] == 'P'){
+            System.out.println("BULK_WRITE_PASS");
+        }else if (result[0] == 'W'){
+            Vector<Integer> v = new Vector<>();
+            for (int i = 0; i < 64; i++){
+                if ((ret & (1 << i)) == 0){
+                    v.add(i);
+                }
+            }
+            System.out.print("Retrying some writes: [");
+            for (Integer i: v){
+                System.out.print(i + ", ");
+            }
+            System.out.println("]");
+
+            for (Integer i: v){
+                Write(content.getData(2 * i), content.getData(2 * i + 1));
+            }
+
+        }
+
+        contentBuilder = ContentType.newBuilder();
+        bulk_size = 0;
+    }
+
 }
